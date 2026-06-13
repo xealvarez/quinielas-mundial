@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiniela Mundial 2026</title>
+
+<style>
+    /* Estilos generales */
+    body {
+        font-family: 'Segoe UI', Arial, sans-serif;
+        background: #f0f2f5;
+        margin: 0;
+        padding: 20px 10px;
+        color: #333;
+    }
+
+    h1 {
+        text-align: center;
+        color: #1a1a1a;
+        margin-bottom: 30px;
+        font-size: 28px;
+    }
+
+    /* Contenedor principal */
+    #matches {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    /* Tarjeta de cada partido */
+    .match {
+        background: white;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 12px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        transition: transform 0.2s;
+    }
+
+    .match:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    /* Encabezado del partido (Fecha, lugar, etc) */
+    .header {
+        font-size: 11px;
+        color: #777;
+        text-align: center;
+        margin-bottom: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 8px;
+    }
+
+    /* Grid layout para mantener todo en línea */
+    .teams {
+        display: grid;
+        grid-template-columns: 1fr 50px 30px 50px 1fr;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .team {
+        display: flex;
+        align-items: center;
+        font-weight: bold;
+        font-size: 15px;
+        gap: 8px;
+    }
+
+    /* Alineaciones para que los textos se acerquen al centro */
+    .team-left {
+        justify-content: flex-end;
+        text-align: right;
+    }
+
+    .team-right {
+        justify-content: flex-start;
+        text-align: left;
+    }
+
+    .flag {
+        width: 24px;
+        height: auto;
+        border-radius: 2px;
+        box-shadow: 0 0 2px rgba(0,0,0,0.2);
+    }
+
+    /* Inputs de goles */
+    .score {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 8px 0;
+        text-align: center;
+        font-size: 18px;
+        font-weight: bold;
+        border: 2px solid #ddd;
+        border-radius: 6px;
+        background: #fafafa;
+        outline: none;
+        transition: all 0.3s ease;
+        /* Ocultar flechitas feas en Chrome/Safari */
+        -moz-appearance: textfield;
+    }
+
+    .score::-webkit-outer-spin-button,
+    .score::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    .score:focus {
+        border-color: #0078d4;
+        background: white;
+    }
+
+    /* Estilos de error para los inputs vacíos */
+    .score.error {
+        border-color: #e74c3c;
+        background-color: #fdf0ed;
+        animation: shake 0.4s ease-in-out;
+    }
+
+    .vs {
+        font-weight: bold;
+        color: #aaa;
+        font-size: 14px;
+        text-align: center;
+    }
+
+    /* Contenedor de botones de acción */
+    .actions {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin: 40px 0;
+        flex-wrap: wrap;
+    }
+
+    button {
+        padding: 15px 25px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        border: none;
+        border-radius: 8px;
+        color: white;
+        transition: background 0.3s, transform 0.1s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-download {
+        background: #0078d4;
+        box-shadow: 0 4px 6px rgba(0, 120, 212, 0.3);
+    }
+
+    .btn-download:hover { background: #005ea6; }
+
+    .btn-load {
+        background: #28a745;
+        box-shadow: 0 4px 6px rgba(40, 167, 69, 0.3);
+    }
+
+    .btn-load:hover { background: #218838; }
+
+    button:active {
+        transform: scale(0.98);
+    }
+
+    /* Notificación flotante (Toast) */
+    #toast {
+        visibility: hidden;
+        min-width: 250px;
+        background-color: #333; /* Color oscuro neutral por defecto */
+        color: white;
+        text-align: center;
+        border-radius: 8px;
+        padding: 16px;
+        position: fixed;
+        z-index: 1000;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-weight: bold;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        opacity: 0;
+        transition: opacity 0.3s, bottom 0.3s, background-color 0.3s;
+    }
+
+    #toast.show {
+        visibility: visible;
+        opacity: 1;
+        bottom: 50px;
+    }
+
+    #toast.error { background-color: #e74c3c; }
+    #toast.success { background-color: #28a745; }
+
+    /* Animación de temblorina para el error */
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-4px); }
+        50% { transform: translateX(4px); }
+        75% { transform: translateX(-4px); }
+    }
+
+    /* --- RESPONSIVE DESIGN --- */
+    @media (max-width: 600px) {
+        .teams {
+            grid-template-columns: 1fr 40px 20px 40px 1fr;
+            gap: 5px;
+        }
+
+        .team {
+            font-size: 12px;
+            flex-wrap: wrap; 
+        }
+
+        .team-left {
+            justify-content: center;
+            text-align: center;
+        }
+
+        .team-right {
+            justify-content: center;
+            text-align: center;
+            flex-direction: row-reverse; 
+        }
+
+        .flag {
+            width: 20px;
+            margin: 0 2px;
+        }
+
+        .score {
+            font-size: 16px;
+            padding: 6px 0;
+        }
+
+        .vs { font-size: 12px; }
+        .header { font-size: 10px; }
+        
+        .actions {
+            flex-direction: column;
+            padding: 0 20px;
+        }
+        
+        button {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+</head>
+<body>
+
+<h1>⚽ Quiniela Mundial 2026</h1>
+
+<div id="matches"></div>
+
+<div class="actions">
+    <!-- Input oculto para seleccionar el archivo -->
+    <input type="file" id="fileInput" accept=".json" style="display: none;" onchange="cargarJSON(event)">
+    
+    <button class="btn-load" onclick="document.getElementById('fileInput').click()">
+        📂 Cargar Quiniela
+    </button>
+
+    <button class="btn-download" onclick="descargarJSON()">
+        📥 Descargar Quiniela JSON
+    </button>
+</div>
+
+<!-- Contenedor para nuestra notificación flotante -->
+<div id="toast">Notificación</div>
+
+<script>
+// =========================================
+// DATOS DE LOS PARTIDOS
+// =========================================
+var d = [
+    // JORNADA 1
+    { id: 1, g: "Grupo A", s: "Estadio Azteca", city: "CDMX", country: "México", date: "Jueves 11 de Junio", time: "13:00 hrs", t1: "México", t1_en: "Mexico", c1: "mx", t2: "Sudáfrica", t2_en: "South Africa", c2: "za" },
+    { id: 2, g: "Grupo A", s: "Estadio Akron", city: "Guadalajara", country: "México", date: "Jueves 11 de Junio", time: "20:00 hrs", t1: "Corea del Sur", t1_en: "South Korea", c1: "kr", t2: "R. Checa", t2_en: "Czech Republic", c2: "cz" },
+    { id: 3, g: "Grupo B", s: "BMO Field", city: "Toronto", country: "Canadá", date: "Viernes 12 de Junio", time: "13:00 hrs", t1: "Canadá", t1_en: "Canada", c1: "ca", t2: "Bosnia", t2_en: "Bosnia & Herzegovina", c2: "ba" },
+    { id: 4, g: "Grupo D", s: "SoFi Stadium", city: "Los Ángeles", country: "EE.UU.", date: "Viernes 12 de Junio", time: "19:00 hrs", t1: "Estados Unidos", t1_en: "USA", c1: "us", t2: "Paraguay", t2_en: "Paraguay", c2: "py" },
+    { id: 5, g: "Grupo B", s: "Levi's Stadium", city: "San Francisco", country: "EE.UU.", date: "Sábado 13 de Junio", time: "13:00 hrs", t1: "Catar", t1_en: "Qatar", c1: "qa", t2: "Suiza", t2_en: "Switzerland", c2: "ch" },
+    { id: 6, g: "Grupo C", s: "MetLife Stadium", city: "Nueva Jersey", country: "EE.UU.", date: "Sábado 13 de Junio", time: "16:00 hrs", t1: "Brasil", t1_en: "Brazil", c1: "br", t2: "Marruecos", t2_en: "Morocco", c2: "ma" },
+    { id: 7, g: "Grupo C", s: "Gillette Stadium", city: "Boston", country: "EE.UU.", date: "Sábado 13 de Junio", time: "19:00 hrs", t1: "Haití", t1_en: "Haiti", c1: "ht", t2: "Escocia", t2_en: "Scotland", c2: "gb-sct" },
+    { id: 8, g: "Grupo D", s: "BC Place", city: "Vancouver", country: "Canadá", date: "Sábado 13 de Junio", time: "22:00 hrs", t1: "Australia", t1_en: "Australia", c1: "au", t2: "Turquía", t2_en: "Turkey", c2: "tr" },
+    { id: 9, g: "Grupo E", s: "NRG Stadium", city: "Houston", country: "EE.UU.", date: "Domingo 14 de Junio", time: "11:00 hrs", t1: "Alemania", t1_en: "Germany", c1: "de", t2: "Curazao", t2_en: "Curaçao", c2: "cw" },
+    { id: 10, g: "Grupo F", s: "AT&T Stadium", city: "Dallas", country: "EE.UU.", date: "Domingo 14 de Junio", time: "14:00 hrs", t1: "Países Bajos", t1_en: "Netherlands", c1: "nl", t2: "Japón", t2_en: "Japan", c2: "jp" },
+    { id: 11, g: "Grupo E", s: "Lincoln Financial Field", city: "Filadelfia", country: "EE.UU.", date: "Domingo 14 de Junio", time: "17:00 hrs", t1: "Costa de Marfil", t1_en: "Ivory Coast", c1: "ci", t2: "Ecuador", t2_en: "Ecuador", c2: "ec" },
+    { id: 12, g: "Grupo F", s: "Estadio BBVA", city: "Monterrey", country: "México", date: "Domingo 14 de Junio", time: "20:00 hrs", t1: "Suecia", t1_en: "Sweden", c1: "se", t2: "Túnez", t2_en: "Tunisia", c2: "tn" },
+    { id: 13, g: "Grupo H", s: "Mercedes-Benz Stadium", city: "Atlanta", country: "EE.UU.", date: "Lunes 15 de Junio", time: "10:00 hrs", t1: "España", t1_en: "Spain", c1: "es", t2: "Cabo Verde", t2_en: "Cape Verde", c2: "cv" },
+    { id: 14, g: "Grupo G", s: "Lumen Field", city: "Seattle", country: "EE.UU.", date: "Lunes 15 de Junio", time: "13:00 hrs", t1: "Bélgica", t1_en: "Belgium", c1: "be", t2: "Egipto", t2_en: "Egypt", c2: "eg" },
+    { id: 15, g: "Grupo H", s: "Hard Rock Stadium", city: "Miami", country: "EE.UU.", date: "Lunes 15 de Junio", time: "16:00 hrs", t1: "Arabia Saudita", t1_en: "Saudi Arabia", c1: "sa", t2: "Uruguay", t2_en: "Uruguay", c2: "uy" },
+    { id: 16, g: "Grupo G", s: "SoFi Stadium", city: "Los Ángeles", country: "EE.UU.", date: "Lunes 15 de Junio", time: "19:00 hrs", t1: "Irán", t1_en: "Iran", c1: "ir", t2: "Nueva Zelanda", t2_en: "New Zealand", c2: "nz" },
+    { id: 17, g: "Grupo I", s: "MetLife Stadium", city: "Nueva Jersey", country: "EE.UU.", date: "Martes 16 de Junio", time: "13:00 hrs", t1: "Francia", t1_en: "France", c1: "fr", t2: "Senegal", t2_en: "Senegal", c2: "sn" },
+    { id: 18, g: "Grupo I", s: "Gillette Stadium", city: "Boston", country: "EE.UU.", date: "Martes 16 de Junio", time: "16:00 hrs", t1: "Irak", t1_en: "Iraq", c1: "iq", t2: "Noruega", t2_en: "Norway", c2: "no" },
+    { id: 19, g: "Grupo J", s: "Arrowhead Stadium", city: "Kansas City", country: "EE.UU.", date: "Martes 16 de Junio", time: "19:00 hrs", t1: "Argentina", t1_en: "Argentina", c1: "ar", t2: "Argelia", t2_en: "Algeria", c2: "dz" },
+    { id: 20, g: "Grupo J", s: "Levi's Stadium", city: "San Francisco", country: "EE.UU.", date: "Martes 16 de Junio", time: "22:00 hrs", t1: "Austria", t1_en: "Austria", c1: "at", t2: "Jordania", t2_en: "Jordan", c2: "jo" },
+    { id: 21, g: "Grupo K", s: "NRG Stadium", city: "Houston", country: "EE.UU.", date: "Miércoles 17 de Junio", time: "11:00 hrs", t1: "Portugal", t1_en: "Portugal", c1: "pt", t2: "RD Congo", t2_en: "DR Congo", c2: "cd" },
+    { id: 22, g: "Grupo L", s: "AT&T Stadium", city: "Dallas", country: "EE.UU.", date: "Miércoles 17 de Junio", time: "14:00 hrs", t1: "Inglaterra", t1_en: "England", c1: "gb-eng", t2: "Croacia", t2_en: "Croatia", c2: "hr" },
+    { id: 23, g: "Grupo L", s: "BMO Field", city: "Toronto", country: "Canadá", date: "Miércoles 17 de Junio", time: "17:00 hrs", t1: "Ghana", t1_en: "Ghana", c1: "gh", t2: "Panamá", t2_en: "Panama", c2: "pa" },
+    { id: 24, g: "Grupo K", s: "Estadio Azteca", city: "CDMX", country: "México", date: "Miércoles 17 de Junio", time: "20:00 hrs", t1: "Uzbekistán", t1_en: "Uzbekistan", c1: "uz", t2: "Colombia", t2_en: "Colombia", c2: "co" },
+
+    // JORNADA 2
+    { id: 25, g: "Grupo A", s: "Estadio Akron", city: "Guadalajara", country: "México", date: "Jueves 18 de Junio", time: "19:00 hrs", t1: "México", t1_en: "Mexico", c1: "mx", t2: "Corea del Sur", t2_en: "South Korea", c2: "kr" },
+    { id: 26, g: "Grupo A", s: "Mercedes-Benz Stadium", city: "Atlanta", country: "EE.UU.", date: "Jueves 18 de Junio", time: "10:00 hrs", t1: "Sudáfrica", t1_en: "South Africa", c1: "za", t2: "R. Checa", t2_en: "Czech Republic", c2: "cz" },
+    { id: 27, g: "Grupo B", s: "BC Place", city: "Vancouver", country: "Canadá", date: "Jueves 18 de Junio", time: "16:00 hrs", t1: "Canadá", t1_en: "Canada", c1: "ca", t2: "Catar", t2_en: "Qatar", c2: "qa" },
+    { id: 28, g: "Grupo B", s: "SoFi Stadium", city: "Los Ángeles", country: "EE.UU.", date: "Jueves 18 de Junio", time: "13:00 hrs", t1: "Bosnia", t1_en: "Bosnia & Herzegovina", c1: "ba", t2: "Suiza", t2_en: "Switzerland", c2: "ch" },
+    { id: 29, g: "Grupo C", s: "Lincoln Financial Field", city: "Filadelfia", country: "EE.UU.", date: "Viernes 19 de Junio", time: "18:30 hrs", t1: "Brasil", t1_en: "Brazil", c1: "br", t2: "Haití", t2_en: "Haiti", c2: "ht" },
+    { id: 30, g: "Grupo C", s: "Gillette Stadium", city: "Boston", country: "EE.UU.", date: "Viernes 19 de Junio", time: "16:00 hrs", t1: "Marruecos", t1_en: "Morocco", c1: "ma", t2: "Escocia", t2_en: "Scotland", c2: "gb-sct" },
+    { id: 31, g: "Grupo D", s: "Lumen Field", city: "Seattle", country: "EE.UU.", date: "Viernes 19 de Junio", time: "13:00 hrs", t1: "Estados Unidos", t1_en: "USA", c1: "us", t2: "Australia", t2_en: "Australia", c2: "au" },
+    { id: 32, g: "Grupo D", s: "Levi's Stadium", city: "San Francisco", country: "EE.UU.", date: "Viernes 19 de Junio", time: "21:00 hrs", t1: "Paraguay", t1_en: "Paraguay", c1: "py", t2: "Turquía", t2_en: "Turkey", c2: "tr" },
+    { id: 33, g: "Grupo E", s: "BMO Field", city: "Toronto", country: "Canadá", date: "Sábado 20 de Junio", time: "14:00 hrs", t1: "Alemania", t1_en: "Germany", c1: "de", t2: "Costa de Marfil", t2_en: "Ivory Coast", c2: "ci" },
+    { id: 34, g: "Grupo E", s: "Arrowhead Stadium", city: "Kansas City", country: "EE.UU.", date: "Sábado 20 de Junio", time: "18:00 hrs", t1: "Curazao", t1_en: "Curaçao", c1: "cw", t2: "Ecuador", t2_en: "Ecuador", c2: "ec" },
+    { id: 35, g: "Grupo F", s: "NRG Stadium", city: "Houston", country: "EE.UU.", date: "Sábado 20 de Junio", time: "11:00 hrs", t1: "Países Bajos", t1_en: "Netherlands", c1: "nl", t2: "Suecia", t2_en: "Sweden", c2: "se" },
+    { id: 36, g: "Grupo F", s: "Estadio BBVA", city: "Monterrey", country: "México", date: "Sábado 20 de Junio", time: "22:00 hrs", t1: "Japón", t1_en: "Japan", c1: "jp", t2: "Túnez", t2_en: "Tunisia", c2: "tn" },
+    { id: 37, g: "Grupo H", s: "Mercedes-Benz Stadium", city: "Atlanta", country: "EE.UU.", date: "Domingo 21 de Junio", time: "10:00 hrs", t1: "España", t1_en: "Spain", c1: "es", t2: "Arabia Saudita", t2_en: "Saudi Arabia", c2: "sa" },
+    { id: 38, g: "Grupo H", s: "Hard Rock Stadium", city: "Miami", country: "EE.UU.", date: "Domingo 21 de Junio", time: "16:00 hrs", t1: "Cabo Verde", t1_en: "Cape Verde", c1: "cv", t2: "Uruguay", t2_en: "Uruguay", c2: "uy" },
+    { id: 39, g: "Grupo G", s: "SoFi Stadium", city: "Los Ángeles", country: "EE.UU.", date: "Domingo 21 de Junio", time: "13:00 hrs", t1: "Bélgica", t1_en: "Belgium", c1: "be", t2: "Irán", t2_en: "Iran", c2: "ir" },
+    { id: 40, g: "Grupo G", s: "BC Place", city: "Vancouver", country: "Canadá", date: "Domingo 21 de Junio", time: "19:00 hrs", t1: "Egipto", t1_en: "Egypt", c1: "eg", t2: "Nueva Zelanda", t2_en: "New Zealand", c2: "nz" },
+    { id: 41, g: "Grupo I", s: "Lincoln Financial Field", city: "Filadelfia", country: "EE.UU.", date: "Lunes 22 de Junio", time: "15:00 hrs", t1: "Francia", t1_en: "France", c1: "fr", t2: "Irak", t2_en: "Iraq", c2: "iq" },
+    { id: 42, g: "Grupo I", s: "MetLife Stadium", city: "Nueva Jersey", country: "EE.UU.", date: "Lunes 22 de Junio", time: "18:00 hrs", t1: "Senegal", t1_en: "Senegal", c1: "sn", t2: "Noruega", t2_en: "Norway", c2: "no" },
+    { id: 43, g: "Grupo J", s: "AT&T Stadium", city: "Dallas", country: "EE.UU.", date: "Lunes 22 de Junio", time: "11:00 hrs", t1: "Argentina", t1_en: "Argentina", c1: "ar", t2: "Austria", t2_en: "Austria", c2: "at" },
+    { id: 44, g: "Grupo J", s: "Levi's Stadium", city: "San Francisco", country: "EE.UU.", date: "Lunes 22 de Junio", time: "21:00 hrs", t1: "Argelia", t1_en: "Algeria", c1: "dz", t2: "Jordania", t2_en: "Jordan", c2: "jo" },
+    { id: 45, g: "Grupo K", s: "NRG Stadium", city: "Houston", country: "EE.UU.", date: "Martes 23 de Junio", time: "11:00 hrs", t1: "Portugal", t1_en: "Portugal", c1: "pt", t2: "Uzbekistán", t2_en: "Uzbekistan", c2: "uz" },
+    { id: 46, g: "Grupo K", s: "Estadio Akron", city: "Guadalajara", country: "México", date: "Martes 23 de Junio", time: "20:00 hrs", t1: "RD Congo", t1_en: "DR Congo", c1: "cd", t2: "Colombia", t2_en: "Colombia", c2: "co" },
+    { id: 47, g: "Grupo L", s: "Gillette Stadium", city: "Boston", country: "EE.UU.", date: "Martes 23 de Junio", time: "14:00 hrs", t1: "Inglaterra", t1_en: "England", c1: "gb-eng", t2: "Ghana", t2_en: "Ghana", c2: "gh" },
+    { id: 48, g: "Grupo L", s: "BMO Field", city: "Toronto", country: "Canadá", date: "Martes 23 de Junio", time: "17:00 hrs", t1: "Croacia", t1_en: "Croatia", c1: "hr", t2: "Panamá", t2_en: "Panama", c2: "pa" },
+
+    // JORNADA 3 
+    { id: 49, g: "Grupo A", s: "Estadio Azteca", city: "CDMX", country: "México", date: "Miércoles 24 de Junio", time: "19:00 hrs", t1: "R. Checa", t1_en: "Czech Republic", c1: "cz", t2: "México", t2_en: "Mexico", c2: "mx" },
+    { id: 50, g: "Grupo A", s: "Estadio BBVA", city: "Monterrey", country: "México", date: "Miércoles 24 de Junio", time: "19:00 hrs", t1: "Sudáfrica", t1_en: "South Africa", c1: "za", t2: "Corea del Sur", t2_en: "South Korea", c2: "kr" },
+    { id: 51, g: "Grupo B", s: "BC Place", city: "Vancouver", country: "Canadá", date: "Miércoles 24 de Junio", time: "13:00 hrs", t1: "Suiza", t1_en: "Switzerland", c1: "ch", t2: "Canadá", t2_en: "Canada", c2: "ca" },
+    { id: 52, g: "Grupo B", s: "Lumen Field", city: "Seattle", country: "EE.UU.", date: "Miércoles 24 de Junio", time: "13:00 hrs", t1: "Bosnia", t1_en: "Bosnia & Herzegovina", c1: "ba", t2: "Catar", t2_en: "Qatar", c2: "qa" },
+    { id: 53, g: "Grupo C", s: "Hard Rock Stadium", city: "Miami", country: "EE.UU.", date: "Miércoles 24 de Junio", time: "16:00 hrs", t1: "Escocia", t1_en: "Scotland", c1: "gb-sct", t2: "Brasil", t2_en: "Brazil", c2: "br" },
+    { id: 54, g: "Grupo C", s: "Mercedes-Benz Stadium", city: "Atlanta", country: "EE.UU.", date: "Miércoles 24 de Junio", time: "16:00 hrs", t1: "Marruecos", t1_en: "Morocco", c1: "ma", t2: "Haití", t2_en: "Haiti", c2: "ht" },
+    { id: 55, g: "Grupo D", s: "SoFi Stadium", city: "Los Ángeles", country: "EE.UU.", date: "Viernes 26 de Junio", time: "20:00 hrs", t1: "Turquía", t1_en: "Turkey", c1: "tr", t2: "Estados Unidos", t2_en: "USA", c2: "us" },
+    { id: 56, g: "Grupo D", s: "Levi's Stadium", city: "San Francisco", country: "EE.UU.", date: "Viernes 26 de Junio", time: "20:00 hrs", t1: "Paraguay", t1_en: "Paraguay", c1: "py", t2: "Australia", t2_en: "Australia", c2: "au" },
+    { id: 57, g: "Grupo E", s: "MetLife Stadium", city: "Nueva Jersey", country: "EE.UU.", date: "Jueves 25 de Junio", time: "14:00 hrs", t1: "Ecuador", t1_en: "Ecuador", c1: "ec", t2: "Alemania", t2_en: "Germany", c2: "de" },
+    { id: 58, g: "Grupo E", s: "Lincoln Financial Field", city: "Filadelfia", country: "EE.UU.", date: "Jueves 25 de Junio", time: "14:00 hrs", t1: "Curazao", t1_en: "Curaçao", c1: "cw", t2: "Costa de Marfil", t2_en: "Ivory Coast", c2: "ci" },
+    { id: 59, g: "Grupo F", s: "Arrowhead Stadium", city: "Kansas City", country: "EE.UU.", date: "Jueves 25 de Junio", time: "17:00 hrs", t1: "Túnez", t1_en: "Tunisia", c1: "tn", t2: "Países Bajos", t2_en: "Netherlands", c2: "nl" },
+    { id: 60, g: "Grupo F", s: "AT&T Stadium", city: "Dallas", country: "EE.UU.", date: "Jueves 25 de Junio", time: "17:00 hrs", t1: "Japón", t1_en: "Japan", c1: "jp", t2: "Suecia", t2_en: "Sweden", c2: "se" },
+    { id: 61, g: "Grupo G", s: "BC Place", city: "Vancouver", country: "Canadá", date: "Viernes 26 de Junio", time: "21:00 hrs", t1: "Nueva Zelanda", t1_en: "New Zealand", c1: "nz", t2: "Bélgica", t2_en: "Belgium", c2: "be" },
+    { id: 62, g: "Grupo G", s: "Lumen Field", city: "Seattle", country: "EE.UU.", date: "Viernes 26 de Junio", time: "21:00 hrs", t1: "Egipto", t1_en: "Egypt", c1: "eg", t2: "Irán", t2_en: "Iran", c2: "ir" },
+    { id: 63, g: "Grupo H", s: "Estadio Akron", city: "Guadalajara", country: "México", date: "Viernes 26 de Junio", time: "18:00 hrs", t1: "Uruguay", t1_en: "Uruguay", c1: "uy", t2: "España", t1_en: "Spain", c2: "es" },
+    { id: 64, g: "Grupo H", s: "NRG Stadium", city: "Houston", country: "EE.UU.", date: "Viernes 26 de Junio", time: "18:00 hrs", t1: "Cabo Verde", t1_en: "Cape Verde", c1: "cv", t2: "Arabia Saudita", t2_en: "Saudi Arabia", c2: "sa" },
+    { id: 65, g: "Grupo I", s: "Gillette Stadium", city: "Boston", country: "EE.UU.", date: "Viernes 26 de Junio", time: "13:00 hrs", t1: "Noruega", t1_en: "Norway", c1: "no", t2: "Francia", t2_en: "France", c2: "fr" },
+    { id: 66, g: "Grupo I", s: "BMO Field", city: "Toronto", country: "Canadá", date: "Viernes 26 de Junio", time: "13:00 hrs", t1: "Senegal", t1_en: "Senegal", c1: "sn", t2: "Irak", t2_en: "Iraq", c2: "iq" },
+    { id: 67, g: "Grupo J", s: "AT&T Stadium", city: "Dallas", country: "EE.UU.", date: "Sábado 27 de Junio", time: "20:00 hrs", t1: "Jordania", t1_en: "Jordan", c1: "jo", t2: "Argentina", t2_en: "Argentina", c2: "ar" },
+    { id: 68, g: "Grupo J", s: "Arrowhead Stadium", city: "Kansas City", country: "EE.UU.", date: "Sábado 27 de Junio", time: "20:00 hrs", t1: "Argelia", t1_en: "Algeria", c1: "dz", t2: "Austria", t2_en: "Austria", c2: "at" },
+    { id: 69, g: "Grupo K", s: "Hard Rock Stadium", city: "Miami", country: "EE.UU.", date: "Sábado 27 de Junio", time: "17:30 hrs", t1: "Colombia", t1_en: "Colombia", c1: "co", t2: "Portugal", t2_en: "Portugal", c2: "pt" },
+    { id: 70, g: "Grupo K", s: "Mercedes-Benz Stadium", city: "Atlanta", country: "EE.UU.", date: "Sábado 27 de Junio", time: "17:30 hrs", t1: "RD Congo", t1_en: "DR Congo", c1: "cd", t2: "Uzbekistán", t2_en: "Uzbekistan", c2: "uz" },
+    { id: 71, g: "Grupo L", s: "MetLife Stadium", city: "Nueva Jersey", country: "EE.UU.", date: "Sábado 27 de Junio", time: "15:00 hrs", t1: "Panamá", t1_en: "Panama", c1: "pa", t2: "Inglaterra", t2_en: "England", c2: "gb-eng" },
+    { id: 72, g: "Grupo L", s: "Lincoln Financial Field", city: "Filadelfia", country: "EE.UU.", date: "Sábado 27 de Junio", time: "15:00 hrs", t1: "Croacia", t1_en: "Croatia", c1: "hr", t2: "Ghana", t2_en: "Ghana", c2: "gh" }
+];
+
+// =========================================
+// GENERAR PARTIDOS
+// =========================================
+
+const container = document.getElementById("matches");
+
+d.forEach(match => {
+    const div = document.createElement("div");
+    div.className = "match";
+
+    // URLs para las banderas usando el código del país
+    const flag1 = `https://flagcdn.com/w20/${match.c1}.png`;
+    const flag2 = `https://flagcdn.com/w20/${match.c2}.png`;
+
+    div.innerHTML = `
+        <div class="header">
+            #${match.id} | ${match.g} | ${match.date} - ${match.time} | ${match.s}, ${match.city}
+        </div>
+
+        <div class="teams">
+            <div class="team team-left">
+                <span>${match.t1}</span>
+                <img src="${flag1}" alt="${match.c1}" class="flag">
+            </div>
+
+            <input type="number" min="0" class="score score1" data-id="${match.id}" value="" placeholder="-">
+
+            <span class="vs">VS</span>
+
+            <input type="number" min="0" class="score score2" data-id="${match.id}" value="" placeholder="-">
+
+            <div class="team team-right">
+                <img src="${flag2}" alt="${match.c2}" class="flag">
+                <span>${match.t2}</span>
+            </div>
+        </div>
+    `;
+
+    container.appendChild(div);
+});
+
+// =========================================
+// VALIDACIÓN, DESCARGA Y CARGA DE JSON
+// =========================================
+
+let toastTimeout;
+function showToast(mensaje, tipo = 'error') {
+    const toast = document.getElementById("toast");
+    toast.textContent = mensaje;
+    
+    // Limpiamos clases previas
+    toast.classList.remove("error", "success");
+    toast.classList.add("show", tipo);
+    
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => {
+        toast.classList.remove("show");
+    }, 3500);
+}
+
+// Remover la clase de error cuando el usuario escribe algo
+document.addEventListener("input", function(e) {
+    if (e.target.classList.contains("score")) {
+        if (e.target.value.trim() !== "") {
+            e.target.classList.remove("error");
+        }
+    }
+});
+
+// Función para descargar el JSON
+function descargarJSON() {
+    const inputs = document.querySelectorAll('.score');
+    let hasError = false;
+
+    // Validación
+    inputs.forEach(input => {
+        if (input.value.trim() === "") {
+            input.classList.add("error");
+            hasError = true;
+        } else {
+            input.classList.remove("error");
+        }
+    });
+
+    if (hasError) {
+        showToast("¡Ah, caray! Te faltan algunos marcadores. Revisa los que están en rojo.", "error");
+        const primerError = document.querySelector('.score.error');
+        if(primerError) {
+            primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return; 
+    }
+
+    const resultado = [];
+    d.forEach(match => {
+        const goles1 = document.querySelector(`.score1[data-id="${match.id}"]`).value;
+        const goles2 = document.querySelector(`.score2[data-id="${match.id}"]`).value;
+
+        resultado.push({
+            id: match.id,
+            goles1: Number(goles1),
+            goles2: Number(goles2)
+        });
+    });
+
+    const contenido = JSON.stringify(resultado, null, 2);
+    const blob = new Blob([contenido], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+
+    a.href = url;
+    a.download = "quiniela_mundial_2026.json";
+
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showToast("¡Quiniela lista y descargada, papá!", "success");
+}
+
+// Función para cargar un JSON previamente descargado
+function cargarJSON(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+        try {
+            const datos = JSON.parse(e.target.result);
+            
+            // Recorremos el JSON para llenar los inputs
+            datos.forEach(partido => {
+                const input1 = document.querySelector(`.score1[data-id="${partido.id}"]`);
+                const input2 = document.querySelector(`.score2[data-id="${partido.id}"]`);
+                
+                if (input1 && input2) {
+                    // Evitamos poner 'null' textual si por alguna razón venían vacíos
+                    input1.value = partido.goles1 !== null ? partido.goles1 : "";
+                    input2.value = partido.goles2 !== null ? partido.goles2 : "";
+                    
+                    // Les quitamos lo rojo en caso de que hubieran intentado guardar antes
+                    input1.classList.remove("error");
+                    input2.classList.remove("error");
+                }
+            });
+            
+            showToast("¡Archivo cargado con éxito! Ya puedes seguir con tu quiniela.", "success");
+        } catch (error) {
+            console.error("Error al leer el archivo:", error);
+            showToast("¡Uy! Ese archivo está corrupto o no es el JSON de la quiniela.", "error");
+        }
+        
+        // Limpiamos el input por si el usuario quiere volver a cargar el mismo archivo después
+        event.target.value = '';
+    };
+
+    reader.readAsText(file);
+}
+
+</script>
+</body>
+</html>
